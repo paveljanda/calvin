@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width={{.Width}}, height={{.Height}}">
+    <title>Calvin Calendar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --white: #ffffff;
+            --black: #000000;
+            --red: #e53935;
+            --grey: #888888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: {{.Width}}px;
+            height: {{.Height}}px;
+            overflow: hidden;
+            background: var(--white);
+            font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+            color: var(--black);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header with month name and weather */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-bottom: 2px solid var(--black);
+            flex-shrink: 0;
+        }
+
+        .month-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--black);
+        }
+
+        .weather-strip {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .weather-hour {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            color: var(--black);
+        }
+
+        .weather-hour .icon {
+            font-size: 20px;
+        }
+
+        .weather-hour .temp {
+            font-weight: 600;
+        }
+
+        .weather-hour .time {
+            font-size: 12px;
+        }
+
+        /* Day names header */
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            border-bottom: 2px solid var(--black);
+            flex-shrink: 0;
+        }
+
+        .weekday {
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--black);
+            text-align: left;
+            border-right: 1px solid var(--black);
+        }
+
+        .weekday:last-child {
+            border-right: none;
+        }
+
+        /* Calendar grid */
+        .calendar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .week {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            flex: 1;
+            border-bottom: 1px solid var(--black);
+        }
+
+        .week:last-child {
+            border-bottom: none;
+        }
+
+        .day {
+            border-right: 1px solid var(--black);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+            background: var(--white);
+        }
+
+        .day:last-child {
+            border-right: none;
+        }
+
+        .day.other-month .day-num {
+            color: var(--grey);
+        }
+
+        .day.other-month .events {
+            color: var(--grey);
+        }
+
+        .day-header {
+            padding: 8px 10px 4px;
+            flex-shrink: 0;
+        }
+
+        .day-num {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--black);
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* TODAY: Red circle - the key accent! */
+        .day.today .day-num {
+            background: var(--red);
+            color: var(--white);
+            border-radius: 50%;
+            font-weight: 600;
+        }
+
+        .day-month {
+            font-size: 12px;
+            color: var(--black);
+            margin-left: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        /* Events */
+        .events {
+            flex: 1;
+            overflow: hidden;
+            padding: 0 6px 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .event {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 6px;
+            font-size: 13px;
+            line-height: 1.3;
+            min-height: 22px;
+            overflow: hidden;
+        }
+
+        /* Timed events: red dot + black text */
+        .event.timed {
+            background: transparent;
+        }
+
+        .event.timed .event-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            background: var(--red);
+        }
+
+        .event.timed .event-time {
+            font-size: 12px;
+            color: var(--black);
+            flex-shrink: 0;
+            font-weight: 500;
+        }
+
+        /* All-day events: black background bar */
+        .event.all-day {
+            background: var(--black);
+            color: var(--white);
+            border-radius: 3px;
+            font-weight: 500;
+        }
+
+        .event-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="month-title">{{.MonthName}} {{.Year}}</div>
+            <div class="weather-strip">
+                {{range .Weather}}
+                <div class="weather-hour">
+                    <span class="icon">{{.Icon}}</span>
+                    <span class="temp">{{.Temperature}}</span>
+                    <span class="time">{{.Hour}}</span>
+                </div>
+                {{end}}
+            </div>
+        </div>
+
+        <!-- Weekday headers -->
+        <div class="weekdays">
+            <div class="weekday">Mon</div>
+            <div class="weekday">Tue</div>
+            <div class="weekday">Wed</div>
+            <div class="weekday">Thu</div>
+            <div class="weekday">Fri</div>
+            <div class="weekday">Sat</div>
+            <div class="weekday">Sun</div>
+        </div>
+
+        <!-- Calendar grid -->
+        <div class="calendar">
+            {{range .Weeks}}
+            <div class="week">
+                {{range .Days}}
+                <div class="day{{if not .IsCurrentMonth}} other-month{{end}}{{if .IsToday}} today{{end}}">
+                    <div class="day-header">
+                        <span class="day-num">{{.DayNum}}</span>
+                        {{if eq .DayNum "1"}}<span class="day-month">{{.MonthShort}}</span>{{end}}
+                    </div>
+                    <div class="events">
+                        {{range .Events}}
+                        {{if .AllDay}}
+                        <div class="event all-day">
+                            <span class="event-title">{{.Summary}}</span>
+                        </div>
+                        {{else}}
+                        <div class="event timed">
+                            <span class="event-dot"></span>
+                            <span class="event-time">{{.Time}}</span>
+                            <span class="event-title">{{.Summary}}</span>
+                        </div>
+                        {{end}}
+                        {{end}}
+                    </div>
+                </div>
+                {{end}}
+            </div>
+            {{end}}
+        </div>
+    </div>
+</body>
+</html>

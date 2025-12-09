@@ -1,0 +1,34 @@
+# Calvin Configuration
+# Copy this to config.yaml and adjust to your needs
+
+# Display dimensions (match your e-ink display)
+display:
+  width: 1304
+  height: 984
+
+# Weather settings (using Open-Meteo - free, no API key required)
+weather:
+  latitude: 50.0755   # Prague, Czech Republic
+  longitude: 14.4378
+  timezone: "Europe/Prague"
+
+# Google Calendar API settings
+calendar:
+  credentials_file: "credentials.json"
+  token_file: "token.json"
+  
+  # Calendars to display
+  calendars:
+    - id: "primary"
+      name: "Personal"
+      color: "#1a73e8"
+    # - id: "work@example.com"
+    #   name: "Work"
+    #   color: "#d50000"
+  
+  # Maximum events per day cell
+  max_events_per_day: 6
+
+# Output settings
+output:
+  path: "calendar.png"
