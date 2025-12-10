@@ -245,7 +245,7 @@ func getTemperatures(date, today time.Time, weatherData *weather.Forecast) (stri
 	}
 
 	eightDaysFromNow := today.AddDate(0, 0, 8)
-	if date.Before(today) || !date.Before(eightDaysFromNow) == false {
+	if date.Before(today) || !date.Before(eightDaysFromNow) {
 		return "", ""
 	}
 
