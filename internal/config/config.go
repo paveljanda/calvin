@@ -28,7 +28,6 @@ type CalendarConfig struct {
 	CredentialsFile string           `yaml:"credentials_file"`
 	TokenFile       string           `yaml:"token_file"`
 	Calendars       []CalendarSource `yaml:"calendars"`
-	DaysAhead       int              `yaml:"days_ahead"`
 	MaxEventsPerDay int              `yaml:"max_events_per_day"`
 }
 
@@ -58,9 +57,6 @@ func Load(path string) (*Config, error) {
 	}
 	if cfg.Display.Height == 0 {
 		cfg.Display.Height = 480
-	}
-	if cfg.Calendar.DaysAhead == 0 {
-		cfg.Calendar.DaysAhead = 7
 	}
 	if cfg.Calendar.MaxEventsPerDay == 0 {
 		cfg.Calendar.MaxEventsPerDay = 10

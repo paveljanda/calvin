@@ -131,6 +131,7 @@ func main() {
 			log.Fatalf("Error writing to file: %v", err)
 			return
 		}
+		return
 	}
 
 	// Convert HTML to PNG

@@ -1,6 +1,15 @@
 # Calvin 📅
 
-E-ink calendar display for Raspberry Pi Zero. Renders Google Calendar + weather to PNG using HTML/CSS.
+E-ink calendar display for Raspberry Pi Zero. Renders Google Calendar + weather forecast to PNG using HTML/CSS.
+
+## Features
+
+- 📅 Month view calendar with current month
+- 🌡️ 8-day weather forecast (day/night temperatures shown in top-right corner of each day)
+- 🎨 Optimized for Waveshare e-ink displays (4-color: white, black, red, grey)
+- 📆 Multi-day events span across all days
+- ⏰ Past events displayed in grey
+- 🔴 Current/future event times shown in red
 
 ## Setup
 
@@ -36,8 +45,8 @@ display:
   height: 984
 
 weather:
-  latitude: 50.0755
-  longitude: 14.4378
+  latitude: 49.9585
+  longitude: 14.2888
   timezone: "Europe/Prague"
 
 calendar:
@@ -46,8 +55,6 @@ calendar:
   calendars:
     - id: "primary"
       name: "Personal"
-      color: "#2563eb"
-  days_ahead: 7
   max_events_per_day: 10
 
 output:
@@ -59,6 +66,7 @@ output:
 ```bash
 ./calvin                  # Generate calendar.png
 ./calvin --list-calendars # Show available calendars
+./calvin --dump-html      # Save html to a file for development purposes
 ```
 
 ## License
