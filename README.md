@@ -37,6 +37,42 @@ cp config.example.yaml config.yaml
 GOOS=linux GOARCH=arm GOARM=6 go build -o calvin-arm .
 ```
 
+### 4. Systemd Setup (Raspberry Pi)
+
+To run Calvin automatically on boot and handle logging via journald (all stdout/stderr logs will be captured by systemd):
+
+```bash
+# Copy the service file
+sudo cp calvin.service /etc/systemd/system/
+
+# Edit the service file if your installation path differs from /home/pi/calvin
+sudo nano /etc/systemd/system/calvin.service
+
+# Reload systemd
+sudo systemctl daemon-reload
+
+# Enable the service to start on boot
+sudo systemctl enable calvin.service
+
+# Start the service manually (optional)
+sudo systemctl start calvin.service
+
+# Check service status
+sudo systemctl status calvin.service
+```
+
+**View logs:**
+```bash
+# View all calvin logs
+sudo journalctl -u calvin.service
+
+# Follow logs in real-time
+sudo journalctl -u calvin.service -f
+
+# View logs since last boot
+sudo journalctl -u calvin.service -b
+```
+
 ## Config
 
 ```yaml

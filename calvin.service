@@ -1,0 +1,17 @@
+[Unit]
+Description=Calvin E-Ink Calendar Generator
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/calvin
+ExecStart=/home/pi/calvin/calvin
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=calvin
+
+[Install]
+WantedBy=multi-user.target
