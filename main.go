@@ -19,7 +19,6 @@ func main() {
 	configPath := flag.String("config", "config.yaml", "Path to configuration file")
 	listCalendars := flag.Bool("list-calendars", false, "List available calendars and exit")
 	noShutdown := flag.Bool("no-shutdown", false, "Don't shutdown or set alarm (for testing) after app run")
-	dumpHTML := flag.Bool("dump-html", false, "Only output HTML to calendar.html file")
 	flag.Parse()
 
 	cfg, err := config.Load(*configPath)
@@ -37,7 +36,7 @@ func main() {
 		return
 	}
 
-	err = app.Run(ctx, cfg, *dumpHTML, *noShutdown)
+	err = app.Run(ctx, cfg, *noShutdown)
 	if err != nil {
 		renderError(ctx, cfg, err)
 		log.Fatalf("Error: %v", err)
@@ -53,7 +52,7 @@ func renderError(ctx context.Context, cfg *config.Config, err error) {
 		"OS/Arch":    fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
 	}
 
-	if renderErr := render.RenderErrorToPNG(ctx, cfg.Display.Width, cfg.Display.Height, err.Error(), errorDetails, cfg.Output.Path); renderErr != nil {
+	if renderErr := render.RenderErrorToPNG(cfg.Display.Width, cfg.Display.Height, err.Error(), errorDetails, cfg.Output.Path); renderErr != nil {
 		log.Printf("Failed to render error to PNG: %v", renderErr)
 	} else {
 		log.Printf("Error details rendered to: %s", cfg.Output.Path)

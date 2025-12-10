@@ -12,7 +12,8 @@ E-ink calendar display for Raspberry Pi Zero. Renders Google Calendar + weather 
 - 📆 Multi-day events span across all days
 - ⏰ Past events displayed in grey
 - 🔴 Current/future event times shown in red
-- 📦 Templates embedded in binary (single executable deployment)
+- 📦 Single self-contained executable with embedded Liberation Sans fonts (no external dependencies)
+- ⚡ Direct graphics rendering using pure Go (no Chrome/Chromium required)
 
 ## Setup
 
@@ -114,10 +115,9 @@ When errors occur, Calvin automatically generates an **error PNG** with debuggin
 ## Commands
 
 ```bash
-./calvin                  # Generate calendar.png, set alarm, shutdown
-./calvin --dry-run        # Test mode: generate PNG but skip PiSuger alarm/ Rasberry Pi shutdown
-./calvin --list-calendars # Show available calendars
-./calvin --dump-html      # Save html to a file for development purposes
+./calvin                   # Generate calendar.png, set alarm, shutdown
+./calvin --no-shutdown     # Test mode: generate PNG but skip PiSugar alarm/Raspberry Pi shutdown
+./calvin --list-calendars  # Show available calendars
 ```
 
 ### PiSugar Integration

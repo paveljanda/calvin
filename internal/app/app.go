@@ -14,7 +14,7 @@ import (
 	"github.com/paveljanda/calvin/internal/weather"
 )
 
-func Run(ctx context.Context, cfg *config.Config, dumpHTML bool, noShutdown bool) error {
+func Run(ctx context.Context, cfg *config.Config, noShutdown bool) error {
 	log.Println("Connecting to Google Calendar API...")
 	calClient, err := calendar.NewClient(ctx, cfg.Calendar.CredentialsFile, cfg.Calendar.TokenFile, cfg.Weather.Timezone)
 	if err != nil {
@@ -36,22 +36,7 @@ func Run(ctx context.Context, cfg *config.Config, dumpHTML bool, noShutdown bool
 		return err
 	}
 
-	html, err := generateHTML(cfg, weatherData, weatherErr, allEvents)
-	if err != nil {
-		return err
-	}
-
-	if dumpHTML {
-		log.Println("Dumping HTML to file...")
-		err := os.WriteFile("calendar.html", []byte(html), 0644)
-		if err != nil {
-			return fmt.Errorf("failed to write HTML to file: %w", err)
-		}
-		log.Println("HTML dumped to calendar.html")
-		return nil
-	}
-
-	err = generatePNG(ctx, cfg, html)
+	err = generatePNG(cfg, weatherData, weatherErr, allEvents)
 	if err != nil {
 		return err
 	}
@@ -113,22 +98,12 @@ func fetchAllCalendarEvents(ctx context.Context, cfg *config.Config, calClient *
 	return allEvents, nil
 }
 
-func generateHTML(cfg *config.Config, weatherData *weather.Forecast, weatherErr error, allEvents []calendar.Event) (string, error) {
+func generatePNG(cfg *config.Config, weatherData *weather.Forecast, weatherErr error, allEvents []calendar.Event) error {
+	log.Println("Generating PNG...")
+
 	templateData := render.PrepareMonthData(cfg.Display.Width, cfg.Display.Height, weatherData, weatherErr, allEvents, cfg.Calendar.MaxEventsPerDay)
 
-	log.Println("Rendering HTML...")
-	html, err := render.RenderHTML("calendar.html", templateData)
-	if err != nil {
-		return "", fmt.Errorf("failed to render HTML: %w", err)
-	}
-
-	return html, nil
-}
-
-func generatePNG(ctx context.Context, cfg *config.Config, html string) error {
-	log.Println("Generating PNG with chromedp...")
-
-	if err := render.HTMLToPNG(ctx, html, cfg.Display.Width, cfg.Display.Height, cfg.Output.Path); err != nil {
+	if err := render.RenderCalendarToPNG(templateData, cfg.Output.Path); err != nil {
 		return fmt.Errorf("failed to generate PNG: %w", err)
 	}
 

@@ -1,23 +1,12 @@
 package render
 
 import (
-	"bytes"
-	"context"
-	"embed"
 	"fmt"
-	"html/template"
-	"net/url"
-	"os"
 	"time"
-
-	"github.com/chromedp/chromedp"
 
 	"github.com/paveljanda/calvin/internal/calendar"
 	"github.com/paveljanda/calvin/internal/weather"
 )
-
-//go:embed templates/*.html
-var templatesFS embed.FS
 
 type TemplateData struct {
 	Width        int
@@ -27,14 +16,6 @@ type TemplateData struct {
 	GeneratedAt  string
 	WeatherError string
 	Weeks        []WeekData
-}
-
-type ErrorTemplateData struct {
-	Width       int
-	Height      int
-	ErrorMsg    string
-	Details     map[string]string
-	GeneratedAt string
 }
 
 type WeekData struct {
@@ -58,82 +39,6 @@ type EventData struct {
 	Time    string
 	Summary string
 	AllDay  bool
-}
-
-func RenderHTML(templateName string, data any) (string, error) {
-	funcMap := template.FuncMap{
-		"safe": func(s string) template.HTML {
-			return template.HTML(s)
-		},
-	}
-
-	tmpl, err := template.New(templateName).Funcs(funcMap).ParseFS(templatesFS, "templates/"+templateName)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse template: %w", err)
-	}
-
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return "", fmt.Errorf("failed to execute template: %w", err)
-	}
-
-	return buf.String(), nil
-}
-
-func HTMLToPNG(ctx context.Context, html string, width, height int, outputPath string) error {
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.Flag("headless", true),
-		chromedp.Flag("disable-gpu", true),
-		chromedp.Flag("no-sandbox", true),
-		chromedp.Flag("disable-dev-shm-usage", true),
-		chromedp.WindowSize(width, height),
-	)
-
-	allocCtx, allocCancel := chromedp.NewExecAllocator(ctx, opts...)
-	defer allocCancel()
-
-	chromeCtx, chromeCancel := chromedp.NewContext(allocCtx)
-	defer chromeCancel()
-
-	chromeCtx, cancel := context.WithTimeout(chromeCtx, 30*time.Second)
-	defer cancel()
-
-	var buf []byte
-	dataURL := "data:text/html;charset=utf-8," + url.PathEscape(html)
-
-	err := chromedp.Run(chromeCtx,
-		chromedp.Navigate(dataURL),
-		chromedp.EmulateViewport(int64(width), int64(height)),
-		chromedp.WaitReady("body"),
-		chromedp.Sleep(500*time.Millisecond),
-		chromedp.FullScreenshot(&buf, 100),
-	)
-	if err != nil {
-		return fmt.Errorf("chromedp failed: %w", err)
-	}
-
-	if err := os.WriteFile(outputPath, buf, 0644); err != nil {
-		return fmt.Errorf("failed to write PNG: %w", err)
-	}
-
-	return nil
-}
-
-func RenderErrorToPNG(ctx context.Context, width, height int, errorMsg string, errorDetails map[string]string, outputPath string) error {
-	data := ErrorTemplateData{
-		Width:       width,
-		Height:      height,
-		ErrorMsg:    errorMsg,
-		Details:     errorDetails,
-		GeneratedAt: time.Now().Format("2006-01-02 15:04:05 MST"),
-	}
-
-	html, err := RenderHTML("error.html", data)
-	if err != nil {
-		return fmt.Errorf("failed to render error HTML: %w", err)
-	}
-
-	return HTMLToPNG(ctx, html, width, height, outputPath)
 }
 
 func PrepareMonthData(width, height int, weatherData *weather.Forecast, weatherErr error, events []calendar.Event, maxEventsPerDay int) TemplateData {
