@@ -10,9 +10,9 @@
     <style>
         :root {
             --white: #ffffff;
-            --black: #000000;
-            --red: #e53935;
-            --grey: #888888;
+            --black: #343a40;
+            --red: #dc3545;
+            --grey: #6c757d;
         }
 
         * {
@@ -44,7 +44,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 16px 24px;
-            border-bottom: 2px solid var(--black);
+            border-bottom: 2px solid var(--grey);
             flex-shrink: 0;
         }
 
@@ -84,7 +84,7 @@
         .weekdays {
             display: grid;
             grid-template-columns: repeat(7, 1fr);
-            border-bottom: 2px solid var(--black);
+            border-bottom: 2px solid var(--grey);
             flex-shrink: 0;
         }
 
@@ -95,7 +95,7 @@
             text-transform: uppercase;
             color: var(--black);
             text-align: left;
-            border-right: 1px solid var(--black);
+            border-right: 1px solid var(--grey);
         }
 
         .weekday:last-child {
@@ -113,7 +113,7 @@
             display: grid;
             grid-template-columns: repeat(7, 1fr);
             flex: 1;
-            border-bottom: 1px solid var(--black);
+            border-bottom: 1px solid var(--grey);
         }
 
         .week:last-child {
@@ -121,7 +121,7 @@
         }
 
         .day {
-            border-right: 1px solid var(--black);
+            border-right: 1px solid var(--grey);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -144,6 +144,9 @@
         .day-header {
             padding: 8px 10px 4px;
             flex-shrink: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
         }
 
         .day-num {
@@ -155,6 +158,23 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
+        }
+
+        .day-temps {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 2px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .day-temp {
+            color: var(--black);
+        }
+
+        .night-temp {
+            color: var(--grey);
         }
 
         /* TODAY: Red circle - the key accent! */
@@ -235,15 +255,6 @@
         <!-- Header -->
         <div class="header">
             <div class="month-title">{{.MonthName}} {{.Year}}</div>
-            <div class="weather-strip">
-                {{range .Weather}}
-                <div class="weather-hour">
-                    <span class="icon">{{.Icon}}</span>
-                    <span class="temp">{{.Temperature}}</span>
-                    <span class="time">{{.Hour}}</span>
-                </div>
-                {{end}}
-            </div>
         </div>
 
         <!-- Weekday headers -->
@@ -264,8 +275,16 @@
                 {{range .Days}}
                 <div class="day{{if not .IsCurrentMonth}} other-month{{end}}{{if .IsToday}} today{{end}}">
                     <div class="day-header">
-                        <span class="day-num">{{.DayNum}}</span>
-                        {{if eq .DayNum "1"}}<span class="day-month">{{.MonthShort}}</span>{{end}}
+                        <div>
+                            <span class="day-num">{{.DayNum}}</span>
+                            {{if eq .DayNum "1"}}<span class="day-month">{{.MonthShort}}</span>{{end}}
+                        </div>
+                        {{if .DayTemp}}
+                        <div class="day-temps">
+                            <span class="day-temp">{{.DayTemp}}</span>
+                            <span class="night-temp">{{.NightTemp}}</span>
+                        </div>
+                        {{end}}
                     </div>
                     <div class="events">
                         {{range .Events}}

@@ -35,7 +35,7 @@ type openMeteoResponse struct {
 // Fetch retrieves weather forecast from Open-Meteo API
 func Fetch(lat, lon float64, timezone string) (*Forecast, error) {
 	url := fmt.Sprintf(
-		"https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&hourly=temperature_2m,weather_code,precipitation,wind_speed_10m&timezone=%s&forecast_days=2",
+		"https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&hourly=temperature_2m,weather_code,precipitation,wind_speed_10m&timezone=%s&forecast_days=7",
 		lat, lon, timezone,
 	)
 
@@ -156,6 +156,48 @@ func WeatherCodeToDescription(code int) string {
 	default:
 		return "Unknown"
 	}
+}
+
+// GetDayTemperature returns the average temperature during day hours (12:00-18:00) for a given date
+func (f *Forecast) GetDayTemperature(date time.Time) float64 {
+	var sum float64
+	var count int
+
+	for _, h := range f.Hourly {
+		if h.Time.Year() == date.Year() && h.Time.Month() == date.Month() && h.Time.Day() == date.Day() {
+			hour := h.Time.Hour()
+			if hour >= 12 && hour < 18 {
+				sum += h.Temperature
+				count++
+			}
+		}
+	}
+
+	if count == 0 {
+		return 0
+	}
+	return sum / float64(count)
+}
+
+// GetNightTemperature returns the average temperature during night hours (00:00-06:00) for a given date
+func (f *Forecast) GetNightTemperature(date time.Time) float64 {
+	var sum float64
+	var count int
+
+	for _, h := range f.Hourly {
+		if h.Time.Year() == date.Year() && h.Time.Month() == date.Month() && h.Time.Day() == date.Day() {
+			hour := h.Time.Hour()
+			if hour >= 0 && hour < 6 {
+				sum += h.Temperature
+				count++
+			}
+		}
+	}
+
+	if count == 0 {
+		return 0
+	}
+	return sum / float64(count)
 }
 
 

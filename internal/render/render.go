@@ -48,6 +48,8 @@ type DayData struct {
 	IsToday        bool
 	IsWeekend      bool
 	IsCurrentMonth bool
+	DayTemp        string
+	NightTemp      string
 	Events         []EventData
 }
 
@@ -216,6 +218,21 @@ func PrepareMonthData(
 				templateEvents = append(templateEvents, eventData)
 			}
 
+			// Get temperatures from weather data (only for next 7 days starting from today)
+			dayTemp := ""
+			nightTemp := ""
+			today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+			sevenDaysFromNow := today.AddDate(0, 0, 7)
+
+			if weatherData != nil && (currentDate.Equal(today) || currentDate.After(today)) && currentDate.Before(sevenDaysFromNow) {
+				dayTempValue := weatherData.GetDayTemperature(currentDate)
+				nightTempValue := weatherData.GetNightTemperature(currentDate)
+				if dayTempValue != 0 || nightTempValue != 0 {
+					dayTemp = fmt.Sprintf("%.0f°", dayTempValue)
+					nightTemp = fmt.Sprintf("%.0f°", nightTempValue)
+				}
+			}
+
 			dayData := DayData{
 				Date:           dateKey,
 				DayNum:         currentDate.Format("2"),
@@ -223,6 +240,8 @@ func PrepareMonthData(
 				IsToday:        calendar.IsToday(currentDate),
 				IsWeekend:      calendar.IsWeekend(currentDate),
 				IsCurrentMonth: currentDate.Month() == currentMonth,
+				DayTemp:        dayTemp,
+				NightTemp:      nightTemp,
 				Events:         templateEvents,
 			}
 
