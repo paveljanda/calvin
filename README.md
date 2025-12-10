@@ -2,6 +2,8 @@
 
 E-ink calendar display for Raspberry Pi Zero. Renders Google Calendar + weather forecast to PNG using HTML/CSS.
 
+![Calendar Output](output-calendar.png)
+
 ## Features
 
 - 📅 Month view calendar with current month
@@ -105,6 +107,8 @@ When errors occur, Calvin automatically generates an **error PNG** with debuggin
 - Command arguments
 - Go version
 - OS/Architecture
+
+![Error Output](output-error.png)
 
 ## Commands
 
