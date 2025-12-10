@@ -38,12 +38,12 @@ func main() {
 
 	err = app.Run(ctx, cfg, *noShutdown)
 	if err != nil {
-		renderError(ctx, cfg, err)
+		renderError(cfg, err)
 		log.Fatalf("Error: %v", err)
 	}
 }
 
-func renderError(ctx context.Context, cfg *config.Config, err error) {
+func renderError(cfg *config.Config, err error) {
 	errorDetails := map[string]string{
 		"Error":      err.Error(),
 		"Time":       time.Now().Format("2006-01-02 15:04:05 MST"),

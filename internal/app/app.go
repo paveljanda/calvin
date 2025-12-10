@@ -31,7 +31,7 @@ func Run(ctx context.Context, cfg *config.Config, noShutdown bool) error {
 		log.Printf("Warning: Failed to fetch weather: %v", weatherErr)
 	}
 
-	allEvents, err := fetchAllCalendarEvents(ctx, cfg, calClient)
+	allEvents, err := fetchAllCalendarEvents(cfg, calClient)
 	if err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func handlePiSugar(ctx context.Context) error {
 	return nil
 }
 
-func fetchAllCalendarEvents(ctx context.Context, cfg *config.Config, calClient *calendar.Client) ([]calendar.Event, error) {
+func fetchAllCalendarEvents(cfg *config.Config, calClient *calendar.Client) ([]calendar.Event, error) {
 	log.Println("Fetching calendar events for month view...")
 	var allEvents []calendar.Event
 
@@ -86,7 +86,7 @@ func fetchAllCalendarEvents(ctx context.Context, cfg *config.Config, calClient *
 		}
 		log.Printf("  Fetching: %s", name)
 
-		events, err := calClient.FetchEventsForMonth(ctx, calCfg.ID, name)
+		events, err := calClient.FetchEventsForMonth(calCfg.ID, name)
 		if err != nil {
 			log.Printf("  Warning: Failed to fetch %s: %v", name, err)
 			continue

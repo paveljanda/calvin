@@ -130,7 +130,7 @@ func saveToken(path string, token *oauth2.Token) error {
 	return json.NewEncoder(f).Encode(token)
 }
 
-func (c *Client) FetchEventsForMonth(ctx context.Context, calendarID string, calendarName string) ([]Event, error) {
+func (c *Client) FetchEventsForMonth(calendarID string, calendarName string) ([]Event, error) {
 	startDate, endDate := c.getMonthDateRange()
 
 	events, err := c.service.Events.List(calendarID).
