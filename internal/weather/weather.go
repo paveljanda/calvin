@@ -1,6 +1,7 @@
 package weather
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -39,7 +40,20 @@ func Fetch(lat, lon float64, timezone string) (*Forecast, error) {
 		lat, lon, timezone,
 	)
 
-	resp, err := http.Get(url)
+	// Create HTTP client with 10 second timeout
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch weather: %w", err)
 	}
@@ -117,5 +131,3 @@ func (f *Forecast) GetNightTemperature(date time.Time) float64 {
 	}
 	return sum / float64(count)
 }
-
-

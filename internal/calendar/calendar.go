@@ -70,8 +70,9 @@ func NewClient(ctx context.Context, credentialsPath, tokenPath string, timezone 
 		}
 	}
 
-	// Create HTTP client with token
+	// Create HTTP client with token and timeout
 	httpClient := config.Client(ctx, token)
+	httpClient.Timeout = 30 * time.Second
 
 	// Create Calendar service
 	service, err := gcal.NewService(ctx, option.WithHTTPClient(httpClient))
@@ -228,7 +229,7 @@ func (c *Client) FetchEventsForMonth(ctx context.Context, calendarID string, cal
 }
 
 // ListCalendars returns all accessible calendars
-func (c *Client) ListCalendars(ctx context.Context) ([]CalendarConfig, error) {
+func (c *Client) ListCalendars() ([]CalendarConfig, error) {
 	calendarList, err := c.service.CalendarList.List().Do()
 	if err != nil {
 		return nil, fmt.Errorf("unable to list calendars: %w", err)

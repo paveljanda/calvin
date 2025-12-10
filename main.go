@@ -50,7 +50,7 @@ func main() {
 
 	// List calendars mode
 	if *listCalendars {
-		calendars, err := calClient.ListCalendars(ctx)
+		calendars, err := calClient.ListCalendars()
 		if err != nil {
 			log.Fatalf("Failed to list calendars: %v", err)
 		}
