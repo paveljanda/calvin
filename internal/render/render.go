@@ -16,7 +16,6 @@ import (
 	"github.com/paveljanda/calvin/internal/weather"
 )
 
-// TemplateData contains all data passed to the HTML template
 type TemplateData struct {
 	Width       int
 	Height      int
@@ -26,7 +25,6 @@ type TemplateData struct {
 	Weeks       []WeekData
 }
 
-// ErrorTemplateData contains data for error page rendering
 type ErrorTemplateData struct {
 	Width       int
 	Height      int
@@ -35,12 +33,10 @@ type ErrorTemplateData struct {
 	GeneratedAt string
 }
 
-// WeekData represents a single week row in the calendar
 type WeekData struct {
 	Days []DayData
 }
 
-// DayData represents a single day for template rendering
 type DayData struct {
 	Date           string
 	DayNum         string
@@ -54,14 +50,12 @@ type DayData struct {
 	Events         []EventData
 }
 
-// EventData represents a single event for template rendering
 type EventData struct {
 	Time    string
 	Summary string
 	AllDay  bool
 }
 
-// RenderHTML generates HTML from template and data
 func RenderHTML(templatePath string, data any) (string, error) {
 	funcMap := template.FuncMap{
 		"safe": func(s string) template.HTML {
@@ -82,9 +76,7 @@ func RenderHTML(templatePath string, data any) (string, error) {
 	return buf.String(), nil
 }
 
-// HTMLToPNG converts HTML content to a PNG image using chromedp
 func HTMLToPNG(ctx context.Context, html string, width, height int, outputPath string) error {
-	// Create chromedp context with options suitable for headless rendering
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.Flag("headless", true),
 		chromedp.Flag("disable-gpu", true),
@@ -99,27 +91,23 @@ func HTMLToPNG(ctx context.Context, html string, width, height int, outputPath s
 	chromeCtx, chromeCancel := chromedp.NewContext(allocCtx)
 	defer chromeCancel()
 
-	// Set timeout
 	chromeCtx, cancel := context.WithTimeout(chromeCtx, 30*time.Second)
 	defer cancel()
 
 	var buf []byte
-
-	// Navigate to data URL with our HTML (URL-encoded to handle special characters)
 	dataURL := "data:text/html;charset=utf-8," + url.PathEscape(html)
 
 	err := chromedp.Run(chromeCtx,
 		chromedp.Navigate(dataURL),
 		chromedp.EmulateViewport(int64(width), int64(height)),
 		chromedp.WaitReady("body"),
-		chromedp.Sleep(500*time.Millisecond), // Allow fonts to load
+		chromedp.Sleep(500*time.Millisecond),
 		chromedp.FullScreenshot(&buf, 100),
 	)
 	if err != nil {
 		return fmt.Errorf("chromedp failed: %w", err)
 	}
 
-	// Write PNG to file
 	if err := os.WriteFile(outputPath, buf, 0644); err != nil {
 		return fmt.Errorf("failed to write PNG: %w", err)
 	}
@@ -127,9 +115,7 @@ func HTMLToPNG(ctx context.Context, html string, width, height int, outputPath s
 	return nil
 }
 
-// RenderErrorToPNG creates a PNG with detailed error information for debugging
 func RenderErrorToPNG(ctx context.Context, width, height int, errorMsg string, errorDetails map[string]string, outputPath string) error {
-	// Prepare error template data
 	data := ErrorTemplateData{
 		Width:       width,
 		Height:      height,
@@ -138,152 +124,148 @@ func RenderErrorToPNG(ctx context.Context, width, height int, errorMsg string, e
 		GeneratedAt: time.Now().Format("2006-01-02 15:04:05 MST"),
 	}
 
-	// Find error template path
-	templatePath := "templates/error.html"
-	absTemplatePath, err := filepath.Abs(templatePath)
+	absTemplatePath, err := filepath.Abs("templates/error.html")
 	if err != nil {
 		return fmt.Errorf("failed to resolve error template path: %w", err)
 	}
 
-	// Check if template exists
 	if _, err := os.Stat(absTemplatePath); os.IsNotExist(err) {
 		return fmt.Errorf("error template not found: %s", absTemplatePath)
 	}
 
-	// Render HTML using template
 	html, err := RenderHTML(absTemplatePath, data)
 	if err != nil {
 		return fmt.Errorf("failed to render error HTML: %w", err)
 	}
 
-	// Use HTMLToPNG to render the error
 	return HTMLToPNG(ctx, html, width, height, outputPath)
 }
 
-// PrepareMonthData prepares calendar data for month view rendering
-func PrepareMonthData(
-	width, height int,
-	weatherData *weather.Forecast,
-	events []calendar.Event,
-	maxEventsPerDay int,
-) TemplateData {
+func PrepareMonthData(width, height int, weatherData *weather.Forecast, events []calendar.Event, maxEventsPerDay int) TemplateData {
 	now := time.Now()
-	currentMonth := now.Month()
-	currentYear := now.Year()
 
 	data := TemplateData{
 		Width:       width,
 		Height:      height,
-		MonthName:   currentMonth.String(),
-		Year:        currentYear,
+		MonthName:   now.Month().String(),
+		Year:        now.Year(),
 		GeneratedAt: now.Format("2006-01-02 15:04:05"),
-		Weeks:       make([]WeekData, 0),
+		Weeks:       buildWeeks(now, buildEventsByDate(events), weatherData, maxEventsPerDay),
 	}
 
-	// Build events map by date
-	// For multi-day events, add them to each day they span
+	return data
+}
+
+func buildEventsByDate(events []calendar.Event) map[string][]calendar.Event {
 	eventsByDate := make(map[string][]calendar.Event)
+
 	for _, event := range events {
 		startDate := time.Date(event.Start.Year(), event.Start.Month(), event.Start.Day(), 0, 0, 0, 0, event.Start.Location())
 		endDate := time.Date(event.End.Year(), event.End.Month(), event.End.Day(), 0, 0, 0, 0, event.End.Location())
 
-		// For all-day events, Google Calendar API returns end date as the day after the last day
-		// So we need to subtract one day from the end date
 		if event.AllDay && endDate.After(startDate) {
 			endDate = endDate.AddDate(0, 0, -1)
 		}
 
-		// Add event to each day it spans
 		for currentDate := startDate; currentDate.Before(endDate) || currentDate.Equal(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
 			dateKey := currentDate.Format("2006-01-02")
 			eventsByDate[dateKey] = append(eventsByDate[dateKey], event)
 		}
 	}
 
-	// Find first day of month and calculate start of calendar grid
-	firstOfMonth := time.Date(currentYear, currentMonth, 1, 0, 0, 0, 0, now.Location())
+	return eventsByDate
+}
 
-	// Start from Monday of the week containing the first of month
-	// Go's Weekday: Sunday = 0, Monday = 1, ..., Saturday = 6
-	// We want Monday = 0, so we adjust
-	weekday := int(firstOfMonth.Weekday())
-	if weekday == 0 {
-		weekday = 7 // Sunday becomes 7
-	}
-	startDate := firstOfMonth.AddDate(0, 0, -(weekday - 1))
+func buildWeeks(now time.Time, eventsByDate map[string][]calendar.Event, weatherData *weather.Forecast, maxEventsPerDay int) []WeekData {
+	startDate, endDate := getMonthGridRange(now)
+	currentMonth := now.Month()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 
-	// Find last day of month
-	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
-
-	// End on Sunday of the week containing the last of month
-	weekday = int(lastOfMonth.Weekday())
-	if weekday == 0 {
-		weekday = 7
-	}
-	endDate := lastOfMonth.AddDate(0, 0, 7-weekday)
-
-	// Build weeks
+	var weeks []WeekData
 	currentDate := startDate
+
 	for currentDate.Before(endDate) || currentDate.Equal(endDate) {
 		week := WeekData{Days: make([]DayData, 0, 7)}
 
 		for i := 0; i < 7; i++ {
-			dateKey := currentDate.Format("2006-01-02")
-			dayEvents := eventsByDate[dateKey]
-
-			// Sort and limit events
-			dayEvents = calendar.SortEvents(dayEvents)
-			if len(dayEvents) > maxEventsPerDay {
-				dayEvents = dayEvents[:maxEventsPerDay]
-			}
-
-			// Convert to template events
-			templateEvents := make([]EventData, 0, len(dayEvents))
-			for _, ev := range dayEvents {
-				eventData := EventData{
-					Summary: ev.Summary,
-					AllDay:  ev.AllDay,
-				}
-				if !ev.AllDay {
-					eventData.Time = ev.Start.Format("15:04")
-				}
-				templateEvents = append(templateEvents, eventData)
-			}
-
-			// Get temperatures from weather data (only for next 8 days starting from today)
-			dayTemp := ""
-			nightTemp := ""
-			today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-			eightDaysFromNow := today.AddDate(0, 0, 8)
-
-			if weatherData != nil && (currentDate.Equal(today) || currentDate.After(today)) && currentDate.Before(eightDaysFromNow) {
-				dayTempValue := weatherData.GetDayTemperature(currentDate)
-				nightTempValue := weatherData.GetNightTemperature(currentDate)
-				if dayTempValue != 0 || nightTempValue != 0 {
-					dayTemp = fmt.Sprintf("%.0f°", dayTempValue)
-					nightTemp = fmt.Sprintf("%.0f°", nightTempValue)
-				}
-			}
-
-			dayData := DayData{
-				Date:           dateKey,
-				DayNum:         currentDate.Format("2"),
-				MonthShort:     currentDate.Format("Jan"),
-				IsToday:        calendar.IsToday(currentDate),
-				IsPast:         currentDate.Before(today),
-				IsWeekend:      calendar.IsWeekend(currentDate),
-				IsCurrentMonth: currentDate.Month() == currentMonth,
-				DayTemp:        dayTemp,
-				NightTemp:      nightTemp,
-				Events:         templateEvents,
-			}
-
+			dayData := buildDayData(currentDate, today, currentMonth, eventsByDate, weatherData, maxEventsPerDay)
 			week.Days = append(week.Days, dayData)
 			currentDate = currentDate.AddDate(0, 0, 1)
 		}
 
-		data.Weeks = append(data.Weeks, week)
+		weeks = append(weeks, week)
 	}
 
-	return data
+	return weeks
+}
+
+func buildDayData(date, today time.Time, currentMonth time.Month, eventsByDate map[string][]calendar.Event, weatherData *weather.Forecast, maxEventsPerDay int) DayData {
+	dateKey := date.Format("2006-01-02")
+	dayEvents := calendar.SortEvents(eventsByDate[dateKey])
+
+	if len(dayEvents) > maxEventsPerDay {
+		dayEvents = dayEvents[:maxEventsPerDay]
+	}
+
+	templateEvents := make([]EventData, 0, len(dayEvents))
+	for _, ev := range dayEvents {
+		eventData := EventData{Summary: ev.Summary, AllDay: ev.AllDay}
+		if !ev.AllDay {
+			eventData.Time = ev.Start.Format("15:04")
+		}
+		templateEvents = append(templateEvents, eventData)
+	}
+
+	dayTemp, nightTemp := getTemperatures(date, today, weatherData)
+
+	return DayData{
+		Date:           dateKey,
+		DayNum:         date.Format("2"),
+		MonthShort:     date.Format("Jan"),
+		IsToday:        calendar.IsToday(date),
+		IsPast:         date.Before(today),
+		IsWeekend:      calendar.IsWeekend(date),
+		IsCurrentMonth: date.Month() == currentMonth,
+		DayTemp:        dayTemp,
+		NightTemp:      nightTemp,
+		Events:         templateEvents,
+	}
+}
+
+func getTemperatures(date, today time.Time, weatherData *weather.Forecast) (string, string) {
+	if weatherData == nil {
+		return "", ""
+	}
+
+	eightDaysFromNow := today.AddDate(0, 0, 8)
+	if date.Before(today) || !date.Before(eightDaysFromNow) == false {
+		return "", ""
+	}
+
+	dayTempValue := weatherData.GetDayTemperature(date)
+	nightTempValue := weatherData.GetNightTemperature(date)
+
+	if dayTempValue == 0 && nightTempValue == 0 {
+		return "", ""
+	}
+
+	return fmt.Sprintf("%.0f°", dayTempValue), fmt.Sprintf("%.0f°", nightTempValue)
+}
+
+func getMonthGridRange(now time.Time) (time.Time, time.Time) {
+	firstOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	lastOfMonth := firstOfMonth.AddDate(0, 1, -1)
+
+	startDate := firstOfMonth.AddDate(0, 0, -(mondayWeekday(firstOfMonth) - 1))
+	endDate := lastOfMonth.AddDate(0, 0, 7-mondayWeekday(lastOfMonth))
+
+	return startDate, endDate
+}
+
+func mondayWeekday(t time.Time) int {
+	weekday := int(t.Weekday())
+	if weekday == 0 {
+		return 7
+	}
+	return weekday
 }

@@ -32,8 +32,8 @@ type CalendarConfig struct {
 }
 
 type CalendarSource struct {
-	ID   string `yaml:"id"`   // Calendar ID ("primary" or email address)
-	Name string `yaml:"name"` // Display name (optional, fetched from API if empty)
+	ID   string `yaml:"id"`
+	Name string `yaml:"name"`
 }
 
 type OutputConfig struct {
@@ -51,7 +51,6 @@ func Load(path string) (*Config, error) {
 		return nil, err
 	}
 
-	// Set defaults
 	if cfg.Display.Width == 0 {
 		cfg.Display.Width = 800
 	}
@@ -74,7 +73,6 @@ func Load(path string) (*Config, error) {
 		cfg.Weather.Timezone = "UTC"
 	}
 
-	// Default to primary calendar if none specified
 	if len(cfg.Calendar.Calendars) == 0 {
 		cfg.Calendar.Calendars = []CalendarSource{
 			{ID: "primary", Name: "Primary"},

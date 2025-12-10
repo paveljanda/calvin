@@ -8,21 +8,18 @@ import (
 	"time"
 )
 
-// HourlyForecast represents weather data for a single hour
 type HourlyForecast struct {
 	Time          time.Time
-	Temperature   float64 // Celsius
-	WeatherCode   int     // WMO weather code
-	Precipitation float64 // mm
-	WindSpeed     float64 // km/h
+	Temperature   float64
+	WeatherCode   int
+	Precipitation float64
+	WindSpeed     float64
 }
 
-// Forecast contains weather forecast data
 type Forecast struct {
 	Hourly []HourlyForecast
 }
 
-// openMeteoResponse represents the API response from Open-Meteo
 type openMeteoResponse struct {
 	Hourly struct {
 		Time          []string  `json:"time"`
@@ -33,14 +30,12 @@ type openMeteoResponse struct {
 	} `json:"hourly"`
 }
 
-// Fetch retrieves weather forecast from Open-Meteo API
 func Fetch(lat, lon float64, timezone string) (*Forecast, error) {
 	url := fmt.Sprintf(
 		"https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&hourly=temperature_2m,weather_code,precipitation,wind_speed_10m&timezone=%s&forecast_days=8",
 		lat, lon, timezone,
 	)
 
-	// Create HTTP client with 10 second timeout
 	client := &http.Client{
 		Timeout: 10 * time.Second,
 	}
@@ -90,36 +85,22 @@ func Fetch(lat, lon float64, timezone string) (*Forecast, error) {
 	return forecast, nil
 }
 
-// GetDayTemperature returns the average temperature during day hours (12:00-18:00) for a given date
 func (f *Forecast) GetDayTemperature(date time.Time) float64 {
-	var sum float64
-	var count int
-
-	for _, h := range f.Hourly {
-		if h.Time.Year() == date.Year() && h.Time.Month() == date.Month() && h.Time.Day() == date.Day() {
-			hour := h.Time.Hour()
-			if hour >= 12 && hour < 18 {
-				sum += h.Temperature
-				count++
-			}
-		}
-	}
-
-	if count == 0 {
-		return 0
-	}
-	return sum / float64(count)
+	return f.getAverageTemperature(date, 12, 18)
 }
 
-// GetNightTemperature returns the average temperature during night hours (00:00-06:00) for a given date
 func (f *Forecast) GetNightTemperature(date time.Time) float64 {
+	return f.getAverageTemperature(date, 0, 6)
+}
+
+func (f *Forecast) getAverageTemperature(date time.Time, startHour, endHour int) float64 {
 	var sum float64
 	var count int
 
 	for _, h := range f.Hourly {
 		if h.Time.Year() == date.Year() && h.Time.Month() == date.Month() && h.Time.Day() == date.Day() {
 			hour := h.Time.Hour()
-			if hour >= 0 && hour < 6 {
+			if hour >= startHour && hour < endHour {
 				sum += h.Temperature
 				count++
 			}
