@@ -17,12 +17,13 @@ import (
 )
 
 type TemplateData struct {
-	Width       int
-	Height      int
-	MonthName   string
-	Year        int
-	GeneratedAt string
-	Weeks       []WeekData
+	Width        int
+	Height       int
+	MonthName    string
+	Year         int
+	GeneratedAt  string
+	WeatherError string
+	Weeks        []WeekData
 }
 
 type ErrorTemplateData struct {
@@ -141,16 +142,22 @@ func RenderErrorToPNG(ctx context.Context, width, height int, errorMsg string, e
 	return HTMLToPNG(ctx, html, width, height, outputPath)
 }
 
-func PrepareMonthData(width, height int, weatherData *weather.Forecast, events []calendar.Event, maxEventsPerDay int) TemplateData {
+func PrepareMonthData(width, height int, weatherData *weather.Forecast, weatherErr error, events []calendar.Event, maxEventsPerDay int) TemplateData {
 	now := time.Now()
 
+	weatherError := ""
+	if weatherErr != nil {
+		weatherError = fmt.Sprintf("Weather: %v", weatherErr)
+	}
+
 	data := TemplateData{
-		Width:       width,
-		Height:      height,
-		MonthName:   now.Month().String(),
-		Year:        now.Year(),
-		GeneratedAt: now.Format("2006-01-02 15:04:05"),
-		Weeks:       buildWeeks(now, buildEventsByDate(events), weatherData, maxEventsPerDay),
+		Width:        width,
+		Height:       height,
+		MonthName:    now.Month().String(),
+		Year:         now.Year(),
+		GeneratedAt:  now.Format("2006-01-02 15:04:05"),
+		WeatherError: weatherError,
+		Weeks:        buildWeeks(now, buildEventsByDate(events), weatherData, maxEventsPerDay),
 	}
 
 	return data

@@ -60,6 +60,17 @@
             font-weight: 400;
         }
 
+        .header-right {
+            text-align: right;
+        }
+
+        .weather-error {
+            font-size: 11px;
+            color: var(--red);
+            font-weight: 500;
+            margin-top: 2px;
+        }
+
         /* Day names header */
         .weekdays {
             display: grid;
@@ -237,7 +248,10 @@
         <!-- Header -->
         <div class="header">
             <div class="month-title">{{.MonthName}} {{.Year}}</div>
-            <div class="generated-at">Generated: {{.GeneratedAt}}</div>
+            <div class="header-right">
+                <div class="generated-at">Generated: {{.GeneratedAt}}</div>
+                {{if .WeatherError}}<div class="weather-error">{{.WeatherError}}</div>{{end}}
+            </div>
         </div>
 
         <!-- Weekday headers -->

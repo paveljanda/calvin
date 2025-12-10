@@ -28,9 +28,10 @@ func Run(ctx context.Context, cfg *config.Config, dumpHTML bool, noShutdown bool
 	log.Printf("Display: %dx%d", cfg.Display.Width, cfg.Display.Height)
 	log.Printf("Output: %s", cfg.Output.Path)
 
-	weatherData, err := fetchWeather(cfg)
-	if err != nil {
-		log.Printf("Warning: Failed to fetch weather: %v", err)
+	log.Println("Fetching weather data...")
+	weatherData, weatherErr := weather.Fetch(cfg.Weather.Latitude, cfg.Weather.Longitude, cfg.Weather.Timezone)
+	if weatherErr != nil {
+		log.Printf("Warning: Failed to fetch weather: %v", weatherErr)
 	}
 
 	allEvents, err := fetchAllCalendarEvents(ctx, cfg, calClient)
@@ -38,7 +39,7 @@ func Run(ctx context.Context, cfg *config.Config, dumpHTML bool, noShutdown bool
 		return err
 	}
 
-	html, err := generateHTML(cfg, weatherData, allEvents)
+	html, err := generateHTML(cfg, weatherData, weatherErr, allEvents)
 	if err != nil {
 		return err
 	}
@@ -63,7 +64,7 @@ func Run(ctx context.Context, cfg *config.Config, dumpHTML bool, noShutdown bool
 		return nil
 	}
 
-	err = handlePiSugar(ctx, cfg)
+	err = handlePiSugar(ctx)
 	if err != nil {
 		return err
 	}
@@ -76,13 +77,13 @@ func Run(ctx context.Context, cfg *config.Config, dumpHTML bool, noShutdown bool
 	return nil
 }
 
-func handlePiSugar(ctx context.Context, cfg *config.Config) error {
+func handlePiSugar(ctx context.Context) error {
 	nextHour := time.Now().Add(time.Hour).Truncate(time.Hour)
 	alarmTime := nextHour.Format("2006-01-02 15:04:05")
 
 	log.Printf("Setting PiSugar alarm for: %s", alarmTime)
 
-	output, err := exec.Command("sudo", "pisugar-cli", "--set-alarm", alarmTime).CombinedOutput()
+	output, err := exec.CommandContext(ctx, "sudo", "pisugar-cli", "--set-alarm", alarmTime).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to set PiSugar alarm: pisugar-cli failed: %w, output: %s", err, string(output))
 	}
@@ -90,11 +91,6 @@ func handlePiSugar(ctx context.Context, cfg *config.Config) error {
 	log.Printf("PiSugar response: %s", string(output))
 
 	return nil
-}
-
-func fetchWeather(cfg *config.Config) (*weather.Forecast, error) {
-	log.Println("Fetching weather data...")
-	return weather.Fetch(cfg.Weather.Latitude, cfg.Weather.Longitude, cfg.Weather.Timezone)
 }
 
 func fetchAllCalendarEvents(ctx context.Context, cfg *config.Config, calClient *calendar.Client) ([]calendar.Event, error) {
@@ -120,8 +116,8 @@ func fetchAllCalendarEvents(ctx context.Context, cfg *config.Config, calClient *
 	return allEvents, nil
 }
 
-func generateHTML(cfg *config.Config, weatherData *weather.Forecast, allEvents []calendar.Event) (string, error) {
-	templateData := render.PrepareMonthData(cfg.Display.Width, cfg.Display.Height, weatherData, allEvents, cfg.Calendar.MaxEventsPerDay)
+func generateHTML(cfg *config.Config, weatherData *weather.Forecast, weatherErr error, allEvents []calendar.Event) (string, error) {
+	templateData := render.PrepareMonthData(cfg.Display.Width, cfg.Display.Height, weatherData, weatherErr, allEvents, cfg.Calendar.MaxEventsPerDay)
 
 	absTemplatePath, err := filepath.Abs(templatePath)
 	if err != nil {

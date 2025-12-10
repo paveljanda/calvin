@@ -7,7 +7,7 @@ E-ink calendar display for Raspberry Pi Zero. Renders Google Calendar + weather 
 ## Features
 
 - 📅 Month view calendar with current month
-- 🌡️ 8-day weather forecast (day/night temperatures shown in top-right corner of each day)
+- 🌡️ 8-day weather forecast (day/night average temperatures shown in top-right corner of each day)
 - 🎨 Optimized for Waveshare e-ink displays (4-color: white, black, red, grey)
 - 📆 Multi-day events span across all days
 - ⏰ Past events displayed in grey
