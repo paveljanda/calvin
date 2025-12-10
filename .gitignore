@@ -4,8 +4,7 @@ calvin-arm
 *.exe
 
 # Output
-calendar.png
-calendar.html
+*.png
 
 # Credentials and tokens (NEVER commit these!)
 credentials.json

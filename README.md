@@ -12,6 +12,7 @@ E-ink calendar display for Raspberry Pi Zero. Renders Google Calendar + weather 
 - 📆 Multi-day events span across all days
 - ⏰ Past events displayed in grey
 - 🔴 Current/future event times shown in red
+- 📦 Templates embedded in binary (single executable deployment)
 
 ## Setup
 

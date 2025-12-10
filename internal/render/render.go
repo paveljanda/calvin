@@ -3,11 +3,11 @@ package render
 import (
 	"bytes"
 	"context"
+	"embed"
 	"fmt"
 	"html/template"
 	"net/url"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/chromedp/chromedp"
@@ -15,6 +15,9 @@ import (
 	"github.com/paveljanda/calvin/internal/calendar"
 	"github.com/paveljanda/calvin/internal/weather"
 )
+
+//go:embed templates/*.html
+var templatesFS embed.FS
 
 type TemplateData struct {
 	Width        int
@@ -57,14 +60,14 @@ type EventData struct {
 	AllDay  bool
 }
 
-func RenderHTML(templatePath string, data any) (string, error) {
+func RenderHTML(templateName string, data any) (string, error) {
 	funcMap := template.FuncMap{
 		"safe": func(s string) template.HTML {
 			return template.HTML(s)
 		},
 	}
 
-	tmpl, err := template.New(filepath.Base(templatePath)).Funcs(funcMap).ParseFiles(templatePath)
+	tmpl, err := template.New(templateName).Funcs(funcMap).ParseFS(templatesFS, "templates/"+templateName)
 	if err != nil {
 		return "", fmt.Errorf("failed to parse template: %w", err)
 	}
@@ -125,16 +128,7 @@ func RenderErrorToPNG(ctx context.Context, width, height int, errorMsg string, e
 		GeneratedAt: time.Now().Format("2006-01-02 15:04:05 MST"),
 	}
 
-	absTemplatePath, err := filepath.Abs("templates/error.html")
-	if err != nil {
-		return fmt.Errorf("failed to resolve error template path: %w", err)
-	}
-
-	if _, err := os.Stat(absTemplatePath); os.IsNotExist(err) {
-		return fmt.Errorf("error template not found: %s", absTemplatePath)
-	}
-
-	html, err := RenderHTML(absTemplatePath, data)
+	html, err := RenderHTML("error.html", data)
 	if err != nil {
 		return fmt.Errorf("failed to render error HTML: %w", err)
 	}

@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"time"
 
 	"github.com/paveljanda/calvin/internal/calendar"
@@ -14,8 +13,6 @@ import (
 	"github.com/paveljanda/calvin/internal/render"
 	"github.com/paveljanda/calvin/internal/weather"
 )
-
-const templatePath = "templates/calendar.html"
 
 func Run(ctx context.Context, cfg *config.Config, dumpHTML bool, noShutdown bool) error {
 	log.Println("Connecting to Google Calendar API...")
@@ -119,17 +116,8 @@ func fetchAllCalendarEvents(ctx context.Context, cfg *config.Config, calClient *
 func generateHTML(cfg *config.Config, weatherData *weather.Forecast, weatherErr error, allEvents []calendar.Event) (string, error) {
 	templateData := render.PrepareMonthData(cfg.Display.Width, cfg.Display.Height, weatherData, weatherErr, allEvents, cfg.Calendar.MaxEventsPerDay)
 
-	absTemplatePath, err := filepath.Abs(templatePath)
-	if err != nil {
-		return "", fmt.Errorf("failed to resolve template path: %w", err)
-	}
-
-	if _, err := os.Stat(absTemplatePath); os.IsNotExist(err) {
-		return "", fmt.Errorf("template not found: %s", absTemplatePath)
-	}
-
 	log.Println("Rendering HTML...")
-	html, err := render.RenderHTML(absTemplatePath, templateData)
+	html, err := render.RenderHTML("calendar.html", templateData)
 	if err != nil {
 		return "", fmt.Errorf("failed to render HTML: %w", err)
 	}
