@@ -21,18 +21,9 @@ type TemplateData struct {
 	Width       int
 	Height      int
 	GeneratedAt time.Time
-	Weather     []WeatherHour
 	MonthName   string
 	Year        int
 	Weeks       []WeekData
-}
-
-// WeatherHour represents weather data for template rendering
-type WeatherHour struct {
-	Hour        string
-	Temperature string
-	Icon        string
-	Description string
 }
 
 // WeekData represents a single week row in the calendar
@@ -141,24 +132,9 @@ func PrepareMonthData(
 		Width:       width,
 		Height:      height,
 		GeneratedAt: now,
-		Weather:     make([]WeatherHour, 0),
 		MonthName:   currentMonth.String(),
 		Year:        currentYear,
 		Weeks:       make([]WeekData, 0),
-	}
-
-	// Prepare weather data (next 12 hours, every 2 hours)
-	if weatherData != nil {
-		hourly := weatherData.GetNext24Hours()
-		for i := 0; i < len(hourly) && len(data.Weather) < 6; i += 2 {
-			h := hourly[i]
-			data.Weather = append(data.Weather, WeatherHour{
-				Hour:        h.Time.Format("15:04"),
-				Temperature: fmt.Sprintf("%.0f°", h.Temperature),
-				Icon:        weather.WeatherCodeToIcon(h.WeatherCode),
-				Description: weather.WeatherCodeToDescription(h.WeatherCode),
-			})
-		}
 	}
 
 	// Build events map by date
@@ -218,13 +194,13 @@ func PrepareMonthData(
 				templateEvents = append(templateEvents, eventData)
 			}
 
-			// Get temperatures from weather data (only for next 7 days starting from today)
+			// Get temperatures from weather data (only for next 8 days starting from today)
 			dayTemp := ""
 			nightTemp := ""
 			today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
-			sevenDaysFromNow := today.AddDate(0, 0, 7)
+			eightDaysFromNow := today.AddDate(0, 0, 8)
 
-			if weatherData != nil && (currentDate.Equal(today) || currentDate.After(today)) && currentDate.Before(sevenDaysFromNow) {
+			if weatherData != nil && (currentDate.Equal(today) || currentDate.After(today)) && currentDate.Before(eightDaysFromNow) {
 				dayTempValue := weatherData.GetDayTemperature(currentDate)
 				nightTempValue := weatherData.GetNightTemperature(currentDate)
 				if dayTempValue != 0 || nightTempValue != 0 {

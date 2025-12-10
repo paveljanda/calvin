@@ -35,7 +35,7 @@ type openMeteoResponse struct {
 // Fetch retrieves weather forecast from Open-Meteo API
 func Fetch(lat, lon float64, timezone string) (*Forecast, error) {
 	url := fmt.Sprintf(
-		"https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&hourly=temperature_2m,weather_code,precipitation,wind_speed_10m&timezone=%s&forecast_days=7",
+		"https://api.open-meteo.com/v1/forecast?latitude=%.4f&longitude=%.4f&hourly=temperature_2m,weather_code,precipitation,wind_speed_10m&timezone=%s&forecast_days=8",
 		lat, lon, timezone,
 	)
 
@@ -74,88 +74,6 @@ func Fetch(lat, lon float64, timezone string) (*Forecast, error) {
 	}
 
 	return forecast, nil
-}
-
-// GetNext24Hours returns hourly forecasts for the next 24 hours
-func (f *Forecast) GetNext24Hours() []HourlyForecast {
-	now := time.Now()
-	var result []HourlyForecast
-
-	for _, h := range f.Hourly {
-		if h.Time.After(now) && h.Time.Before(now.Add(24*time.Hour)) {
-			result = append(result, h)
-		}
-	}
-
-	return result
-}
-
-// WeatherCodeToIcon converts WMO weather code to an emoji/icon
-func WeatherCodeToIcon(code int) string {
-	switch {
-	case code == 0:
-		return "☀️" // Clear sky
-	case code == 1, code == 2, code == 3:
-		return "⛅" // Partly cloudy
-	case code >= 45 && code <= 48:
-		return "🌫️" // Fog
-	case code >= 51 && code <= 55:
-		return "🌧️" // Drizzle
-	case code >= 56 && code <= 57:
-		return "🌧️" // Freezing drizzle
-	case code >= 61 && code <= 65:
-		return "🌧️" // Rain
-	case code >= 66 && code <= 67:
-		return "🌧️" // Freezing rain
-	case code >= 71 && code <= 77:
-		return "❄️" // Snow
-	case code >= 80 && code <= 82:
-		return "🌧️" // Rain showers
-	case code >= 85 && code <= 86:
-		return "❄️" // Snow showers
-	case code >= 95 && code <= 99:
-		return "⛈️" // Thunderstorm
-	default:
-		return "☁️"
-	}
-}
-
-// WeatherCodeToDescription converts WMO weather code to text
-func WeatherCodeToDescription(code int) string {
-	switch {
-	case code == 0:
-		return "Clear"
-	case code == 1:
-		return "Mostly clear"
-	case code == 2:
-		return "Partly cloudy"
-	case code == 3:
-		return "Overcast"
-	case code >= 45 && code <= 48:
-		return "Fog"
-	case code >= 51 && code <= 55:
-		return "Drizzle"
-	case code >= 56 && code <= 57:
-		return "Freezing drizzle"
-	case code >= 61 && code <= 65:
-		return "Rain"
-	case code >= 66 && code <= 67:
-		return "Freezing rain"
-	case code >= 71 && code <= 75:
-		return "Snow"
-	case code == 77:
-		return "Snow grains"
-	case code >= 80 && code <= 82:
-		return "Rain showers"
-	case code >= 85 && code <= 86:
-		return "Snow showers"
-	case code == 95:
-		return "Thunderstorm"
-	case code >= 96 && code <= 99:
-		return "Thunderstorm with hail"
-	default:
-		return "Unknown"
-	}
 }
 
 // GetDayTemperature returns the average temperature during day hours (12:00-18:00) for a given date
