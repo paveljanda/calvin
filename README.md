@@ -1,6 +1,8 @@
 # Calvin 📅
 
-E-ink calendar display for Raspberry Pi Zero. Renders Google Calendar + weather forecast to PNG using HTML/CSS.
+E-ink calendar display for Raspberry Pi Zero. Renders Google Calendar + weather forecast to a PNG + external display without the heavy chromium dependency - only using 2D graphics.
+
+- Inspiration: https://github.com/speedyg0nz/MagInkCal (Thanks!)
 
 ![Calendar Output](output-calendar.png)
 
