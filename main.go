@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"runtime"
 	"time"
@@ -23,6 +24,7 @@ func main() {
 	outputPath := flag.String("output", "", "Output PNG path (overrides config)")
 	dumpHTML := flag.Bool("dump-html", false, "Output HTML to path")
 	listCalendars := flag.Bool("list-calendars", false, "List available calendars and exit")
+	dryRun := flag.Bool("dry-run", false, "Don't shutdown or set alarm (for testing)")
 	flag.Parse()
 
 	// Load configuration
@@ -53,7 +55,7 @@ func main() {
 
 	// List calendars mode
 	if *listCalendars {
-		calendars, err := calClient.ListCalendars(ctx)
+		calendars, err := calClient.ListCalendars()
 		if err != nil {
 			renderError(ctx, cfg, fmt.Errorf("failed to list calendars: %w", err))
 			log.Fatalf("Failed to list calendars: %v", err)
@@ -135,7 +137,7 @@ func main() {
 		log.Println("Dumping HTML to file...")
 		err := os.WriteFile("calendar.html", []byte(html), 0644)
 		if err != nil {
-			renderError(ctx, cfg, fmt.Errorf("error writing HTML to file: %w", err))
+			renderError(ctx, cfg, fmt.Errorf("failed to write HTML to file: %w", err))
 			log.Fatalf("Error writing to file: %v", err)
 		}
 		log.Println("HTML dumped to calendar.html")
@@ -156,6 +158,48 @@ func main() {
 	}
 
 	fmt.Println("✓ Calendar image generated successfully!")
+
+	// Set PiSugar alarm for next hour (unless dry-run)
+	if err := setPiSugarAlarm(); err != nil {
+		renderError(ctx, cfg, fmt.Errorf("failed to set PiSugar alarm PNG: %w", err))
+		log.Printf("Warning: Failed to set PiSugar alarm: %v", err)
+	} else {
+		log.Println("PiSugar alarm set for next hour at :00")
+	}
+	if !*dryRun {
+
+		// Shutdown the system
+		log.Println("Shutting down system...")
+		cmd := exec.Command("sudo", "shutdown", "-h", "now")
+		if err := cmd.Run(); err != nil {
+			renderError(ctx, cfg, fmt.Errorf("failed to shutdown: %w", err))
+			log.Fatalf("Failed to shutdown: %v", err)
+		}
+	} else {
+		log.Println("Dry-run mode: skipping alarm and shutdown")
+	}
+}
+
+// setPiSugarAlarm sets the PiSugar alarm for the next hour at :00
+func setPiSugarAlarm() error {
+	now := time.Now()
+	// Calculate next hour at :00
+	nextHour := now.Add(time.Hour).Truncate(time.Hour)
+
+	// PiSugar alarm format: YYYY-MM-DD HH:MM:SS
+	alarmTime := nextHour.Format("2006-01-02 15:04:05")
+
+	log.Printf("Setting PiSugar alarm for: %s", alarmTime)
+
+	// Call pisugar-cli to set alarm
+	cmd := exec.Command("sudo", "pisugar-cli", "--set-alarm", alarmTime)
+	output, err := cmd.CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("pisugar-cli failed: %w, output: %s", err, string(output))
+	}
+
+	log.Printf("PiSugar response: %s", string(output))
+	return nil
 }
 
 // renderError renders an error to the PNG output for debugging

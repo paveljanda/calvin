@@ -73,10 +73,18 @@ When errors occur, Calvin automatically generates an **error PNG** with debuggin
 ## Commands
 
 ```bash
-./calvin                  # Generate calendar.png
+./calvin                  # Generate calendar.png, set alarm, shutdown
+./calvin --dry-run        # Test mode: generate PNG but skip PiSuger alarm/ Rasberry Pi shutdown
 ./calvin --list-calendars # Show available calendars
 ./calvin --dump-html      # Save html to a file for development purposes
 ```
+
+### PiSugar Integration
+
+When running on Raspberry Pi Zero with PiSugar:
+- Automatically sets alarm for next hour at :00 (e.g., if it's 14:30, alarm set for 15:00)
+- Shuts down the system after generating the calendar
+- Use `--dry-run` flag for testing without alarm/shutdown
 
 ## License
 

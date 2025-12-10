@@ -18,12 +18,11 @@ import (
 
 // TemplateData contains all data passed to the HTML template
 type TemplateData struct {
-	Width       int
-	Height      int
-	GeneratedAt time.Time
-	MonthName   string
-	Year        int
-	Weeks       []WeekData
+	Width     int
+	Height    int
+	MonthName string
+	Year      int
+	Weeks     []WeekData
 }
 
 // ErrorTemplateData contains data for error page rendering
@@ -32,7 +31,7 @@ type ErrorTemplateData struct {
 	Height      int
 	ErrorMsg    string
 	Details     map[string]string
-	Timestamp   string
+	GeneratedAt string
 }
 
 // WeekData represents a single week row in the calendar
@@ -62,7 +61,7 @@ type EventData struct {
 }
 
 // RenderHTML generates HTML from template and data
-func RenderHTML(templatePath string, data TemplateData) (string, error) {
+func RenderHTML(templatePath string, data any) (string, error) {
 	funcMap := template.FuncMap{
 		"safe": func(s string) template.HTML {
 			return template.HTML(s)
@@ -131,11 +130,11 @@ func HTMLToPNG(ctx context.Context, html string, width, height int, outputPath s
 func RenderErrorToPNG(ctx context.Context, width, height int, errorMsg string, errorDetails map[string]string, outputPath string) error {
 	// Prepare error template data
 	data := ErrorTemplateData{
-		Width:     width,
-		Height:    height,
-		ErrorMsg:  errorMsg,
-		Details:   errorDetails,
-		Timestamp: time.Now().Format("2006-01-02 15:04:05 MST"),
+		Width:       width,
+		Height:      height,
+		ErrorMsg:    errorMsg,
+		Details:     errorDetails,
+		GeneratedAt: time.Now().Format("2006-01-02 15:04:05 MST"),
 	}
 
 	// Find error template path
@@ -172,12 +171,11 @@ func PrepareMonthData(
 	currentYear := now.Year()
 
 	data := TemplateData{
-		Width:       width,
-		Height:      height,
-		GeneratedAt: now,
-		MonthName:   currentMonth.String(),
-		Year:        currentYear,
-		Weeks:       make([]WeekData, 0),
+		Width:     width,
+		Height:    height,
+		MonthName: currentMonth.String(),
+		Year:      currentYear,
+		Weeks:     make([]WeekData, 0),
 	}
 
 	// Build events map by date
