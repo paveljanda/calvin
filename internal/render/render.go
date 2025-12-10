@@ -18,11 +18,12 @@ import (
 
 // TemplateData contains all data passed to the HTML template
 type TemplateData struct {
-	Width     int
-	Height    int
-	MonthName string
-	Year      int
-	Weeks     []WeekData
+	Width       int
+	Height      int
+	MonthName   string
+	Year        int
+	GeneratedAt string
+	Weeks       []WeekData
 }
 
 // ErrorTemplateData contains data for error page rendering
@@ -171,11 +172,12 @@ func PrepareMonthData(
 	currentYear := now.Year()
 
 	data := TemplateData{
-		Width:     width,
-		Height:    height,
-		MonthName: currentMonth.String(),
-		Year:      currentYear,
-		Weeks:     make([]WeekData, 0),
+		Width:       width,
+		Height:      height,
+		MonthName:   currentMonth.String(),
+		Year:        currentYear,
+		GeneratedAt: now.Format("2006-01-02 15:04:05"),
+		Weeks:       make([]WeekData, 0),
 	}
 
 	// Build events map by date

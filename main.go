@@ -159,14 +159,14 @@ func main() {
 
 	fmt.Println("✓ Calendar image generated successfully!")
 
-	// Set PiSugar alarm for next hour (unless dry-run)
-	if err := setPiSugarAlarm(); err != nil {
-		renderError(ctx, cfg, fmt.Errorf("failed to set PiSugar alarm PNG: %w", err))
-		log.Printf("Warning: Failed to set PiSugar alarm: %v", err)
-	} else {
-		log.Println("PiSugar alarm set for next hour at :00")
-	}
 	if !*dryRun {
+		// Set PiSugar alarm for next hour (unless dry-run)
+		if err := setPiSugarAlarm(); err != nil {
+			renderError(ctx, cfg, fmt.Errorf("failed to set PiSugar alarm PNG: %w", err))
+			log.Printf("Warning: Failed to set PiSugar alarm: %v", err)
+		} else {
+			log.Println("PiSugar alarm set for next hour at :00")
+		}
 
 		// Shutdown the system
 		log.Println("Shutting down system...")
