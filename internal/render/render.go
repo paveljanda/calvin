@@ -9,13 +9,14 @@ import (
 )
 
 type TemplateData struct {
-	Width        int
-	Height       int
-	MonthName    string
-	Year         int
-	GeneratedAt  string
-	WeatherError string
-	Weeks        []WeekData
+	Width             int
+	Height            int
+	MonthName         string
+	Year              int
+	GeneratedAt       string
+	BatteryPercentage string
+	WeatherError      string
+	Weeks             []WeekData
 }
 
 type WeekData struct {
@@ -41,7 +42,7 @@ type EventData struct {
 	AllDay  bool
 }
 
-func PrepareMonthData(width, height int, weatherData *weather.Forecast, weatherErr error, events []calendar.Event, maxEventsPerDay int) TemplateData {
+func PrepareMonthData(width, height int, weatherData *weather.Forecast, weatherErr error, events []calendar.Event, maxEventsPerDay int, batteryPercentage string) TemplateData {
 	now := time.Now()
 
 	weatherError := ""
@@ -50,13 +51,14 @@ func PrepareMonthData(width, height int, weatherData *weather.Forecast, weatherE
 	}
 
 	data := TemplateData{
-		Width:        width,
-		Height:       height,
-		MonthName:    now.Month().String(),
-		Year:         now.Year(),
-		GeneratedAt:  now.Format("2006-01-02 15:04:05"),
-		WeatherError: weatherError,
-		Weeks:        buildWeeks(now, buildEventsByDate(events), weatherData, maxEventsPerDay),
+		Width:             width,
+		Height:            height,
+		MonthName:         now.Month().String(),
+		Year:              now.Year(),
+		GeneratedAt:       now.Format("2006-01-02 15:04:05"),
+		BatteryPercentage: batteryPercentage,
+		WeatherError:      weatherError,
+		Weeks:             buildWeeks(now, buildEventsByDate(events), weatherData, maxEventsPerDay),
 	}
 
 	return data

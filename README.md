@@ -10,6 +10,7 @@ E-ink calendar display for Raspberry Pi Zero. Renders Google Calendar + weather 
 
 - 📅 Month view calendar with current month
 - 🌡️ 8-day weather forecast (day/night average temperatures shown in top-right corner of each day)
+- 🔋 Battery percentage display (PiSugar 2 integration)
 - 🎨 Optimized for Waveshare e-ink displays (4-color: white, black, red, grey)
 - 📆 Multi-day events span across all days
 - ⏰ Past events displayed in grey
@@ -119,15 +120,18 @@ When errors occur, Calvin automatically generates an **error PNG** with debuggin
 ```bash
 ./calvin                   # Generate calendar.png, set alarm, shutdown
 ./calvin --no-shutdown     # Test mode: generate PNG but skip PiSugar alarm/Raspberry Pi shutdown
+./calvin --no-battery      # Don't read battery level (shows 100%, useful for local development)
 ./calvin --list-calendars  # Show available calendars
 ```
 
 ### PiSugar Integration
 
-When running on Raspberry Pi Zero with PiSugar:
+When running on Raspberry Pi Zero with PiSugar 2:
+- Displays battery percentage in the header (e.g., "Battery: 85%")
 - Automatically sets alarm for next hour at :00 (e.g., if it's 14:30, alarm set for 15:00)
 - Shuts down the system after generating the calendar
-- Use `--dry-run` flag for testing without alarm/shutdown
+- Use `--no-shutdown` flag for testing without alarm/shutdown
+- Use `--no-battery` flag when running locally without PiSugar hardware
 
 ## License
 

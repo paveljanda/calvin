@@ -8,13 +8,14 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/paveljanda/calvin/internal/battery"
 	"github.com/paveljanda/calvin/internal/calendar"
 	"github.com/paveljanda/calvin/internal/config"
 	"github.com/paveljanda/calvin/internal/render"
 	"github.com/paveljanda/calvin/internal/weather"
 )
 
-func Run(ctx context.Context, cfg *config.Config, noShutdown bool) error {
+func Run(ctx context.Context, cfg *config.Config, noShutdown bool, noBattery bool) error {
 	log.Println("Connecting to Google Calendar API...")
 	calClient, err := calendar.NewClient(ctx, cfg.Calendar.CredentialsFile, cfg.Calendar.TokenFile, cfg.Weather.Timezone)
 	if err != nil {
@@ -36,7 +37,16 @@ func Run(ctx context.Context, cfg *config.Config, noShutdown bool) error {
 		return err
 	}
 
-	err = generatePNG(cfg, weatherData, weatherErr, allEvents)
+	batteryPercent := "100%"
+	if !noBattery {
+		batteryPercent, err = battery.GetBatteryPercentage(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get battery percentage: %w", err)
+		}
+	}
+	log.Printf("Battery: %s", batteryPercent)
+
+	err = generatePNG(cfg, weatherData, weatherErr, allEvents, batteryPercent)
 	if err != nil {
 		return err
 	}
@@ -98,10 +108,10 @@ func fetchAllCalendarEvents(cfg *config.Config, calClient *calendar.Client) ([]c
 	return allEvents, nil
 }
 
-func generatePNG(cfg *config.Config, weatherData *weather.Forecast, weatherErr error, allEvents []calendar.Event) error {
+func generatePNG(cfg *config.Config, weatherData *weather.Forecast, weatherErr error, allEvents []calendar.Event, batteryPercentage string) error {
 	log.Println("Generating PNG...")
 
-	templateData := render.PrepareMonthData(cfg.Display.Width, cfg.Display.Height, weatherData, weatherErr, allEvents, cfg.Calendar.MaxEventsPerDay)
+	templateData := render.PrepareMonthData(cfg.Display.Width, cfg.Display.Height, weatherData, weatherErr, allEvents, cfg.Calendar.MaxEventsPerDay, batteryPercentage)
 
 	if err := render.RenderCalendarToPNG(templateData, cfg.Output.Path); err != nil {
 		return fmt.Errorf("failed to generate PNG: %w", err)

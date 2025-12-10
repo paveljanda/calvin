@@ -19,6 +19,7 @@ func main() {
 	configPath := flag.String("config", "config.yaml", "Path to configuration file")
 	listCalendars := flag.Bool("list-calendars", false, "List available calendars and exit")
 	noShutdown := flag.Bool("no-shutdown", false, "Don't shutdown or set alarm (for testing) after app run")
+	noBattery := flag.Bool("no-battery", false, "Don't read battery level (shows 100%)")
 	flag.Parse()
 
 	cfg, err := config.Load(*configPath)
@@ -36,7 +37,7 @@ func main() {
 		return
 	}
 
-	err = app.Run(ctx, cfg, *noShutdown)
+	err = app.Run(ctx, cfg, *noShutdown, *noBattery)
 	if err != nil {
 		renderError(cfg, err)
 		log.Fatalf("Error: %v", err)

@@ -71,7 +71,7 @@ func (r *calendarRenderer) drawHeader(data TemplateData) {
 
 	r.dc.SetFontFace(truetype.NewFace(regularFont, &truetype.Options{Size: 12}))
 	r.dc.SetHexColor(colorGrey)
-	generatedText := fmt.Sprintf("Generated: %s", data.GeneratedAt)
+	generatedText := fmt.Sprintf("Generated: %s | Battery: %s", data.GeneratedAt, data.BatteryPercentage)
 	textWidth, _ := r.dc.MeasureString(generatedText)
 	r.dc.DrawString(generatedText, float64(r.width)-padding-textWidth, 35)
 
