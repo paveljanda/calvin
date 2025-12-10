@@ -26,6 +26,15 @@ type TemplateData struct {
 	Weeks       []WeekData
 }
 
+// ErrorTemplateData contains data for error page rendering
+type ErrorTemplateData struct {
+	Width       int
+	Height      int
+	ErrorMsg    string
+	Details     map[string]string
+	Timestamp   string
+}
+
 // WeekData represents a single week row in the calendar
 type WeekData struct {
 	Days []DayData
@@ -116,6 +125,39 @@ func HTMLToPNG(ctx context.Context, html string, width, height int, outputPath s
 	}
 
 	return nil
+}
+
+// RenderErrorToPNG creates a PNG with detailed error information for debugging
+func RenderErrorToPNG(ctx context.Context, width, height int, errorMsg string, errorDetails map[string]string, outputPath string) error {
+	// Prepare error template data
+	data := ErrorTemplateData{
+		Width:     width,
+		Height:    height,
+		ErrorMsg:  errorMsg,
+		Details:   errorDetails,
+		Timestamp: time.Now().Format("2006-01-02 15:04:05 MST"),
+	}
+
+	// Find error template path
+	templatePath := "templates/error.html"
+	absTemplatePath, err := filepath.Abs(templatePath)
+	if err != nil {
+		return fmt.Errorf("failed to resolve error template path: %w", err)
+	}
+
+	// Check if template exists
+	if _, err := os.Stat(absTemplatePath); os.IsNotExist(err) {
+		return fmt.Errorf("error template not found: %s", absTemplatePath)
+	}
+
+	// Render HTML using template
+	html, err := RenderHTML(absTemplatePath, data)
+	if err != nil {
+		return fmt.Errorf("failed to render error HTML: %w", err)
+	}
+
+	// Use HTMLToPNG to render the error
+	return HTMLToPNG(ctx, html, width, height, outputPath)
 }
 
 // PrepareMonthData prepares calendar data for month view rendering

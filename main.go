@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
+	"time"
 
 	"github.com/paveljanda/calvin/internal/calendar"
 	"github.com/paveljanda/calvin/internal/config"
@@ -45,13 +47,15 @@ func main() {
 		cfg.Weather.Timezone,
 	)
 	if err != nil {
+		renderError(ctx, cfg, fmt.Errorf("failed to create calendar client: %w", err))
 		log.Fatalf("Failed to create calendar client: %v", err)
 	}
 
 	// List calendars mode
 	if *listCalendars {
-		calendars, err := calClient.ListCalendars()
+		calendars, err := calClient.ListCalendars(ctx)
 		if err != nil {
+			renderError(ctx, cfg, fmt.Errorf("failed to list calendars: %w", err))
 			log.Fatalf("Failed to list calendars: %v", err)
 		}
 
@@ -109,11 +113,13 @@ func main() {
 	// Resolve template path
 	absTemplatePath, err := filepath.Abs(*templatePath)
 	if err != nil {
+		renderError(ctx, cfg, fmt.Errorf("failed to resolve template path: %w", err))
 		log.Fatalf("Failed to resolve template path: %v", err)
 	}
 
 	// Check if template exists
 	if _, err := os.Stat(absTemplatePath); os.IsNotExist(err) {
+		renderError(ctx, cfg, fmt.Errorf("template not found: %s", absTemplatePath))
 		log.Fatalf("Template not found: %s", absTemplatePath)
 	}
 
@@ -121,6 +127,7 @@ func main() {
 	log.Println("Rendering HTML...")
 	html, err := render.RenderHTML(absTemplatePath, templateData)
 	if err != nil {
+		renderError(ctx, cfg, fmt.Errorf("failed to render HTML: %w", err))
 		log.Fatalf("Failed to render HTML: %v", err)
 	}
 
@@ -128,9 +135,10 @@ func main() {
 		log.Println("Dumping HTML to file...")
 		err := os.WriteFile("calendar.html", []byte(html), 0644)
 		if err != nil {
+			renderError(ctx, cfg, fmt.Errorf("error writing HTML to file: %w", err))
 			log.Fatalf("Error writing to file: %v", err)
-			return
 		}
+		log.Println("HTML dumped to calendar.html")
 		return
 	}
 
@@ -138,6 +146,7 @@ func main() {
 	log.Println("Generating PNG with chromedp...")
 
 	if err := render.HTMLToPNG(ctx, html, cfg.Display.Width, cfg.Display.Height, cfg.Output.Path); err != nil {
+		renderError(ctx, cfg, fmt.Errorf("failed to generate PNG: %w", err))
 		log.Fatalf("Failed to generate PNG: %v", err)
 	}
 
@@ -147,4 +156,21 @@ func main() {
 	}
 
 	fmt.Println("✓ Calendar image generated successfully!")
+}
+
+// renderError renders an error to the PNG output for debugging
+func renderError(ctx context.Context, cfg *config.Config, err error) {
+	errorDetails := map[string]string{
+		"Error":      err.Error(),
+		"Time":       time.Now().Format("2006-01-02 15:04:05 MST"),
+		"Args":       fmt.Sprintf("%v", os.Args),
+		"Go Version": runtime.Version(),
+		"OS/Arch":    fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH),
+	}
+
+	if renderErr := render.RenderErrorToPNG(ctx, cfg.Display.Width, cfg.Display.Height, err.Error(), errorDetails, cfg.Output.Path); renderErr != nil {
+		log.Printf("Failed to render error to PNG: %v", renderErr)
+	} else {
+		log.Printf("Error details rendered to: %s", cfg.Output.Path)
+	}
 }

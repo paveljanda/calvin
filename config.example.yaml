@@ -16,16 +16,14 @@ weather:
 calendar:
   credentials_file: "credentials.json"
   token_file: "token.json"
-  
+
   # Calendars to display
   calendars:
     - id: "primary"
       name: "Personal"
-      color: "#1a73e8"
     # - id: "work@example.com"
     #   name: "Work"
-    #   color: "#d50000"
-  
+
   # Maximum events per day cell
   max_events_per_day: 6
 

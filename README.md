@@ -61,6 +61,15 @@ output:
   path: "calendar.png"
 ```
 
+### Error Handling
+
+When errors occur, Calvin automatically generates an **error PNG** with debugging information at the configured output path. The error image includes:
+- Error message
+- Timestamp
+- Command arguments
+- Go version
+- OS/Architecture
+
 ## Commands
 
 ```bash
