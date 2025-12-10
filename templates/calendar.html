@@ -188,22 +188,14 @@
             overflow: hidden;
         }
 
-        /* Timed events: red dot + black text */
+        /* Timed events */
         .event.timed {
             background: transparent;
         }
 
-        .event.timed .event-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            background: var(--red);
-        }
-
         .event.timed .event-time {
             font-size: 12px;
-            color: var(--black);
+            color: var(--red);
             flex-shrink: 0;
             font-weight: 500;
         }
@@ -214,6 +206,16 @@
             color: var(--white);
             border-radius: 3px;
             font-weight: 500;
+        }
+
+        /* Past day events: grey */
+        .day.past .event.timed .event-time,
+        .day.past .event.timed .event-title {
+            color: var(--grey);
+        }
+
+        .day.past .event.all-day {
+            background: var(--grey);
         }
 
         .event-title {
@@ -247,7 +249,7 @@
             {{range .Weeks}}
             <div class="week">
                 {{range .Days}}
-                <div class="day{{if not .IsCurrentMonth}} other-month{{end}}{{if .IsToday}} today{{end}}">
+                <div class="day{{if not .IsCurrentMonth}} other-month{{end}}{{if .IsToday}} today{{end}}{{if .IsPast}} past{{end}}">
                     <div class="day-header">
                         <div>
                             <span class="day-num">{{.DayNum}}</span>
@@ -268,7 +270,6 @@
                         </div>
                         {{else}}
                         <div class="event timed">
-                            <span class="event-dot"></span>
                             <span class="event-time">{{.Time}}</span>
                             <span class="event-title">{{.Summary}}</span>
                         </div>

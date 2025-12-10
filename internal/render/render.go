@@ -37,6 +37,7 @@ type DayData struct {
 	DayNum         string
 	MonthShort     string
 	IsToday        bool
+	IsPast         bool
 	IsWeekend      bool
 	IsCurrentMonth bool
 	DayTemp        string
@@ -138,10 +139,23 @@ func PrepareMonthData(
 	}
 
 	// Build events map by date
+	// For multi-day events, add them to each day they span
 	eventsByDate := make(map[string][]calendar.Event)
 	for _, event := range events {
-		dateKey := event.Start.Format("2006-01-02")
-		eventsByDate[dateKey] = append(eventsByDate[dateKey], event)
+		startDate := time.Date(event.Start.Year(), event.Start.Month(), event.Start.Day(), 0, 0, 0, 0, event.Start.Location())
+		endDate := time.Date(event.End.Year(), event.End.Month(), event.End.Day(), 0, 0, 0, 0, event.End.Location())
+
+		// For all-day events, Google Calendar API returns end date as the day after the last day
+		// So we need to subtract one day from the end date
+		if event.AllDay && endDate.After(startDate) {
+			endDate = endDate.AddDate(0, 0, -1)
+		}
+
+		// Add event to each day it spans
+		for currentDate := startDate; currentDate.Before(endDate) || currentDate.Equal(endDate); currentDate = currentDate.AddDate(0, 0, 1) {
+			dateKey := currentDate.Format("2006-01-02")
+			eventsByDate[dateKey] = append(eventsByDate[dateKey], event)
+		}
 	}
 
 	// Find first day of month and calculate start of calendar grid
@@ -214,6 +228,7 @@ func PrepareMonthData(
 				DayNum:         currentDate.Format("2"),
 				MonthShort:     currentDate.Format("Jan"),
 				IsToday:        calendar.IsToday(currentDate),
+				IsPast:         currentDate.Before(today),
 				IsWeekend:      calendar.IsWeekend(currentDate),
 				IsCurrentMonth: currentDate.Month() == currentMonth,
 				DayTemp:        dayTemp,
